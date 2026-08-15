@@ -79,6 +79,20 @@ export function thumbnailOf(videoId: string): string {
   return `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
 }
 
+/** "3:34" / "1:02:15" → 초. 형식이 아니면 null. */
+export function timestampToSeconds(timestamp: string | null): number | null {
+  if (!timestamp) return null;
+  const parts = timestamp.split(':').map((part) => Number(part));
+  if (parts.some(Number.isNaN)) return null;
+  return parts.reduce((total, part) => total * 60 + part, 0);
+}
+
+/** 해당 시점부터 재생되는 유튜브 링크. 타임스탬프 없으면 처음부터. */
+export function youtubeAtTime(videoId: string, timestamp: string | null): string {
+  const seconds = timestampToSeconds(timestamp);
+  return `https://www.youtube.com/watch?v=${videoId}${seconds ? `&t=${seconds}s` : ''}`;
+}
+
 export function formatCount(value: number | null): string {
   if (value === null) return '-';
   if (value >= 10_000) {

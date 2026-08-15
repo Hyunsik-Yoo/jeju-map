@@ -16,6 +16,8 @@ export interface PlaceAppearance {
   videoId: string;
   featuredMenu: string | null;
   context: string | null;
+  /** 영상에서 이 가게가 나오는 시점 ("3:34" / "1:02:15"). 미확보면 null. */
+  timestamp: string | null;
 }
 
 export interface PlaceMenu {

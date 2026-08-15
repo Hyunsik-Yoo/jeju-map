@@ -74,7 +74,10 @@ def main() -> None:
     # place_videos: 장소 ⇄ 영상 N:M. 양쪽에 모두 걸어둔다.
     # 같은 (장소, 영상) 쌍이 시트에 중복돼 있어도 한 번만 센다(출연 횟수 왜곡 방지).
     seen_pairs = set()
-    for key, video_id, featured_menu, context in raw["links"]:
+    for row in raw["links"]:
+        # timestamp 열은 나중에 추가돼 구형 스냅샷엔 없을 수 있다.
+        key, video_id, featured_menu, context = row[:4]
+        timestamp = row[4] if len(row) > 4 else ""
         place = places.get(key)
         if not place or video_id not in videos:
             continue
@@ -85,6 +88,7 @@ def main() -> None:
             "videoId": video_id,
             "featuredMenu": featured_menu or None,
             "context": context or None,
+            "timestamp": timestamp or None,
         })
         videos[video_id]["placeKeys"].append(key)
 
