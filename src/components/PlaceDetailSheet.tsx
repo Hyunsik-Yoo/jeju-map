@@ -2,6 +2,7 @@
 
 // 마커를 누르면 지도 위로 뜨는 장소 상세.
 // 가슴속 3천원 웹의 StorePreviewSheet 자리에 대응한다.
+import { useEffect, useRef } from 'react';
 import {
   PLACE_TYPE_LABEL,
   channelById,
@@ -18,9 +19,37 @@ interface PlaceDetailSheetProps {
   place: Place | null;
   onClose: () => void;
   onSelectVideo: (videoId: string) => void;
+  /** 시트 실제 높이를 부모에 알린다 — 지도가 보이는 영역 기준으로 센터를 잡는 데 쓴다. */
+  onHeightChange?: (height: number) => void;
 }
 
-export default function PlaceDetailSheet({ place, onClose, onSelectVideo }: PlaceDetailSheetProps) {
+export default function PlaceDetailSheet({
+  place,
+  onClose,
+  onSelectVideo,
+  onHeightChange,
+}: PlaceDetailSheetProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const onHeightChangeRef = useRef(onHeightChange);
+
+  useEffect(() => {
+    onHeightChangeRef.current = onHeightChange;
+  }, [onHeightChange]);
+
+  // 내용에 따라 높이가 달라지므로 실측해서 알린다. 닫히면 0.
+  useEffect(() => {
+    const element = rootRef.current;
+    if (!place || !element) {
+      onHeightChangeRef.current?.(0);
+      return;
+    }
+    const report = () => onHeightChangeRef.current?.(element.offsetHeight);
+    report();
+    const observer = new ResizeObserver(report);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [place]);
+
   if (!place) return null;
 
   const hours = formatOpeningHours(place);
@@ -35,7 +64,10 @@ export default function PlaceDetailSheet({ place, onClose, onSelectVideo }: Plac
   }
 
   return (
-    <div className="absolute inset-x-0 bottom-0 z-30 min-h-[282px] max-h-[75%] overflow-y-auto rounded-t-[20px] bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.16)]">
+    <div
+      ref={rootRef}
+      className="absolute inset-x-0 bottom-0 z-30 min-h-[282px] max-h-[75%] overflow-y-auto rounded-t-[20px] bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.16)]"
+    >
       <div className="flex items-start gap-2 px-5 pb-3 pt-5">
         <div className="min-w-0 flex-1">
           <h2 className="truncate text-[20px] font-bold leading-[28px] text-[#0F0F0F]">
