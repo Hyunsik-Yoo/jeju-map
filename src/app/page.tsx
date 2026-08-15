@@ -38,6 +38,8 @@ const NaverMap = dynamic(() => import('@/components/NaverMap'), { ssr: false });
 
 const COLLAPSED_HEIGHT = 282;
 const EXPANDED_TOP_OFFSET = 132;
+/** 상단 오버레이(로고 + 필터 바) 높이 — 지도 "보이는 영역" 계산용. */
+const TOP_OVERLAY_HEIGHT = 96;
 
 export default function Home() {
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
@@ -47,6 +49,8 @@ export default function Home() {
   const [openPicker, setOpenPicker] = useState<'channel' | 'category' | null>(null);
   const [top10Active, setTop10Active] = useState(false);
   const [requestModalOpen, setRequestModalOpen] = useState(false);
+  // 장소 상세 시트의 실측 높이. 열려 있으면 지도 하단 inset으로 쓴다.
+  const [detailSheetHeight, setDetailSheetHeight] = useState(0);
   const [sheetExpanded, setSheetExpanded] = useState(false);
 
   const selectedVideo = selectedVideoId ? videoById.get(selectedVideoId) ?? null : null;
@@ -259,7 +263,9 @@ export default function Home() {
           fitTo={fitTo}
           onMarkerClick={handleSelectPlace}
           onMapClick={handleMapClick}
-          bottomPadding={COLLAPSED_HEIGHT}
+          // 상세 시트가 열려 있으면 그 실측 높이, 아니면 접힌 바텀시트 높이만큼이 가려진다.
+          bottomInset={selectedPlace ? detailSheetHeight || COLLAPSED_HEIGHT : COLLAPSED_HEIGHT}
+          topInset={TOP_OVERLAY_HEIGHT}
         />
       </div>
 
@@ -457,6 +463,7 @@ export default function Home() {
         place={selectedPlace}
         onClose={() => setSelectedPlaceKey(null)}
         onSelectVideo={handleSelectVideo}
+        onHeightChange={setDetailSheetHeight}
       />
 
       <ChannelPickerSheet

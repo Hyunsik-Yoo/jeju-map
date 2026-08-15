@@ -20,8 +20,10 @@ interface NaverMapProps {
   fitTo: { lat: number; lng: number }[] | null;
   onMarkerClick: (placeKey: string) => void;
   onMapClick: () => void;
-  /** 바텀시트에 가리지 않도록 지도 하단에 남겨둘 여백(px). */
-  bottomPadding: number;
+  /** 화면 아래를 덮는 오버레이(바텀시트·상세 시트) 높이(px). 보이는 영역 기준으로 센터·핏을 잡는다. */
+  bottomInset: number;
+  /** 화면 위를 덮는 오버레이(로고·필터 바) 높이(px). */
+  topInset?: number;
 }
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID;
@@ -50,7 +52,8 @@ export default function NaverMap({
   fitTo,
   onMarkerClick,
   onMapClick,
-  bottomPadding,
+  bottomInset,
+  topInset = 0,
 }: NaverMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<any>(null);
@@ -140,11 +143,21 @@ export default function NaverMap({
   }, [map, markers]);
 
   // ---- 선택 영역 맞추기 ----
+  // 지도는 전체 화면을 채우지만 실제로 "보이는" 영역은 상·하단 오버레이 사이다.
+  // 단일 좌표는 보이는 영역의 세로 중앙에 오도록 센터를 남쪽으로 보정해 이동한다
+  // (보정 없이 화면 중앙에 두면 시트에 가려 아래로 치우쳐 보인다).
   useEffect(() => {
     if (!map || !window.naver?.maps || !fitTo || fitTo.length === 0) return;
 
     if (fitTo.length === 1) {
-      map.morph(new window.naver.maps.LatLng(fitTo[0].lat, fitTo[0].lng), 15);
+      const { lat, lng } = fitTo[0];
+      const zoom = 15;
+      // 화면 중앙과 보이는 영역 중앙의 차이(px) → 위도 보정값.
+      // 줌 z에서 1px ≈ 156543.03392 * cos(lat) / 2^z 미터, 위도 1도 ≈ 111,320m.
+      const pixelShift = (bottomInset - topInset) / 2;
+      const metersPerPixel = (156543.03392 * Math.cos((lat * Math.PI) / 180)) / 2 ** zoom;
+      const latShift = (pixelShift * metersPerPixel) / 111_320;
+      map.morph(new window.naver.maps.LatLng(lat - latShift, lng), zoom);
       return;
     }
 
@@ -152,8 +165,13 @@ export default function NaverMap({
     fitTo.forEach((point) =>
       bounds.extend(new window.naver.maps.LatLng(point.lat, point.lng))
     );
-    map.fitBounds(bounds, { top: 120, right: 48, bottom: bottomPadding + 24, left: 48 });
-  }, [map, fitTo, bottomPadding]);
+    map.fitBounds(bounds, {
+      top: topInset + 48,
+      right: 48,
+      bottom: bottomInset + 24,
+      left: 48,
+    });
+  }, [map, fitTo, bottomInset, topInset]);
 
   // ---- 시트 높이 변화로 지도 크기가 바뀌면 viewport를 다시 계산 ----
   useEffect(() => {
