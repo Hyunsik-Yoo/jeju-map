@@ -15,7 +15,10 @@ async function getAccessToken(): Promise<string> {
   if (cached && Date.now() < cached.expiresAt - 60_000) return cached.token;
 
   const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+  // 환경변수에 값을 감싼 따옴표가 섞여 들어오거나 줄바꿈이 \n 리터럴인 경우 모두 복원한다.
+  const privateKey = process.env.GOOGLE_PRIVATE_KEY?.trim()
+    .replace(/^["']|["']$/g, '')
+    .replace(/\\n/g, '\n');
   if (!email || !privateKey) throw new Error('GOOGLE_SERVICE_ACCOUNT_* env가 없습니다');
 
   const now = Math.floor(Date.now() / 1000);
