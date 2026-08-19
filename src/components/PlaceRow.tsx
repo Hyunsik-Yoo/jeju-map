@@ -1,7 +1,7 @@
 'use client';
 
 // 장소 한 줄. 가슴속 3천원 웹 StoreListItem의 타이포·간격을 따른다.
-import { PLACE_TYPE_LABEL, formatOpeningHours } from '@/lib/data';
+import { PLACE_TYPE_LABEL, formatOpeningHours, youtubeAtTime } from '@/lib/data';
 import type { Place, PlaceAppearance } from '@/types';
 
 interface PlaceRowProps {
@@ -44,6 +44,24 @@ export default function PlaceRow({
           <span className="min-w-0 truncate text-[16px] font-bold leading-[24px] text-[#0F0F0F]">
             {place.name}
           </span>
+
+          {/* 이 가게가 나오는 장면부터 유튜브 재생. 행 클릭(장소 선택)과 분리한다. */}
+          {appearance?.timestamp && (
+            <span
+              role="link"
+              aria-label={`${appearance.timestamp}부터 영상 보기`}
+              onClick={(event) => {
+                event.stopPropagation();
+                window.open(youtubeAtTime(appearance.videoId, appearance.timestamp), '_blank', 'noopener');
+              }}
+              className="ml-auto flex shrink-0 cursor-pointer items-center gap-1 self-start rounded-full bg-[#FF5C43] py-1 pl-2 pr-2.5 text-[11px] font-bold leading-[14px] text-white active:opacity-80"
+            >
+              <svg viewBox="0 0 24 24" width="9" height="9" fill="currentColor" aria-hidden="true">
+                <path d="M8 5.5v13l11-6.5-11-6.5z" />
+              </svg>
+              {appearance.timestamp}
+            </span>
+          )}
         </div>
 
         <div className="mt-0.5 flex items-center gap-1.5 text-[14px] leading-[20px] text-[#787878]">
