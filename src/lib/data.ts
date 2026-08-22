@@ -59,6 +59,17 @@ export function categoryStatsOf(places: Place[]): CategoryStat[] {
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'ko'));
 }
 
+/** "새로 올라온 영상" — 최근 7일 안에 지도에 반영된 영상. 최신 반영순 → 최신 게시순. */
+export function recentlyAddedVideos(now = new Date()): Video[] {
+  const cutoff = new Date(now.getTime() - 7 * 86_400_000).toISOString().slice(0, 10);
+  return data.videos
+    .filter((video) => video.addedAt >= cutoff)
+    .sort(
+      (a, b) =>
+        b.addedAt.localeCompare(a.addedAt) || b.publishedAt.localeCompare(a.publishedAt)
+    );
+}
+
 export function channelOf(video: Video): Channel | undefined {
   return channelById.get(video.channelId);
 }

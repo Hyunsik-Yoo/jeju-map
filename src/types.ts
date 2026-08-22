@@ -52,6 +52,8 @@ export interface Video {
   title: string;
   url: string;
   publishedAt: string;
+  /** 이 영상이 지도에 처음 반영된 날짜(스냅샷 기준) — "새로 올라온 영상" 판별용. */
+  addedAt: string;
   durationSec: number | null;
   viewCount: number | null;
   likeCount: number | null;
@@ -77,4 +79,6 @@ export interface MapMarker {
   selected: boolean;
   /** 출연 TOP10 모드의 순위(1부터). 값이 있으면 프로필 대신 순위 마커로 그린다. */
   rank?: number | null;
+  /** 최근 반영된 영상에 나온 가게 — 마커에 NEW 뱃지를 단다. */
+  isNew?: boolean;
 }
