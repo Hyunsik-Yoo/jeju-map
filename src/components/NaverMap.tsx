@@ -43,8 +43,9 @@ function markerContent(marker: MapMarker): string {
     : `<div class="jm-marker__avatar"></div>`;
   const badge =
     marker.videoCount > 1 ? `<span class="jm-marker__badge">${marker.videoCount}</span>` : '';
+  const newBadge = marker.isNew ? `<span class="jm-marker__new">NEW</span>` : '';
 
-  return `<div class="jm-marker${selected}"><span class="jm-marker__tail"></span>${image}${badge}</div>`;
+  return `<div class="jm-marker${selected}"><span class="jm-marker__tail"></span>${image}${badge}${newBadge}</div>`;
 }
 
 export default function NaverMap({

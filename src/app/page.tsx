@@ -13,6 +13,7 @@ import BottomSheet from '@/components/BottomSheet';
 import CategoryPickerSheet from '@/components/CategoryPickerSheet';
 import ChannelPickerSheet from '@/components/ChannelPickerSheet';
 import FilterBar from '@/components/FilterBar';
+import NewVideosRail from '@/components/NewVideosRail';
 import PlaceDetailSheet from '@/components/PlaceDetailSheet';
 import PlaceRow from '@/components/PlaceRow';
 import Top10PlaceRow from '@/components/Top10PlaceRow';
@@ -28,6 +29,7 @@ import {
   formatRelativeDate,
   placeByKey,
   placesOf,
+  recentlyAddedVideos,
   thumbnailOf,
   videoById,
 } from '@/lib/data';
@@ -56,6 +58,15 @@ export default function Home() {
   const selectedVideo = selectedVideoId ? videoById.get(selectedVideoId) ?? null : null;
   const selectedPlace = selectedPlaceKey ? placeByKey.get(selectedPlaceKey) ?? null : null;
   const selectedChannel = selectedChannelId ? channelById.get(selectedChannelId) ?? null : null;
+
+  // 최근 일주일 사이 지도에 반영된 영상 — 시트 상단 신규 섹션과 NEW 뱃지에서 쓴다.
+  const newVideos = useMemo(() => recentlyAddedVideos(), []);
+  const newVideoIds = useMemo(() => new Set(newVideos.map((video) => video.id)), [newVideos]);
+  // 신규 영상에 나온 가게 — 지도 마커에 NEW 뱃지를 단다.
+  const newPlaceKeys = useMemo(
+    () => new Set(newVideos.flatMap((video) => video.placeKeys)),
+    [newVideos]
+  );
 
   const videoCountByChannel = useMemo(() => {
     const counts = new Map<string, number>();
@@ -186,9 +197,10 @@ export default function Home() {
           videoCount: place.videos.length,
           selected: place.key === selectedPlaceKey,
           rank: rankByPlaceKey?.get(place.key) ?? null,
+          isNew: newPlaceKeys.has(place.key),
         };
       }),
-    [visiblePlaces, selectedPlaceKey, selectedVideoId, rankByPlaceKey]
+    [visiblePlaces, selectedPlaceKey, selectedVideoId, rankByPlaceKey, newPlaceKeys]
   );
 
   // 영상 선택 → 그 영상의 장소가 모두 보이게. 장소 선택 → 그 장소로.
@@ -446,8 +458,17 @@ export default function Home() {
           </>
         ) : (
           <>
+            {/* 필터가 없는 기본 화면에서만 신규 섹션을 얹는다 — 필터 결과와 섞이면 헷갈린다. */}
+            {!filtersActive && newVideos.length > 0 && (
+              <NewVideosRail videos={newVideos} onSelect={handleSelectVideo} />
+            )}
             {visibleVideos.map((video) => (
-              <VideoCard key={video.id} video={video} onClick={() => handleSelectVideo(video.id)} />
+              <VideoCard
+                key={video.id}
+                video={video}
+                isNew={newVideoIds.has(video.id)}
+                onClick={() => handleSelectVideo(video.id)}
+              />
             ))}
             {visibleVideos.length === 0 && (
               <p className="px-5 py-10 text-center text-[14px] text-[#8E8E8E]">

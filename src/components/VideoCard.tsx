@@ -7,10 +7,12 @@ import type { Video } from '@/types';
 interface VideoCardProps {
   video: Video;
   selected?: boolean;
+  /** 최근 지도에 반영된 영상 — 썸네일에 NEW 뱃지를 단다. */
+  isNew?: boolean;
   onClick: () => void;
 }
 
-export default function VideoCard({ video, selected = false, onClick }: VideoCardProps) {
+export default function VideoCard({ video, selected = false, isNew = false, onClick }: VideoCardProps) {
   const channel = channelOf(video);
   const duration = formatDuration(video.durationSec);
 
@@ -35,6 +37,11 @@ export default function VideoCard({ video, selected = false, onClick }: VideoCar
         {duration && (
           <span className="absolute bottom-1 right-1 rounded bg-black/75 px-1 text-[10px] font-semibold leading-[15px] text-white">
             {duration}
+          </span>
+        )}
+        {isNew && (
+          <span className="absolute left-1 top-1 rounded-[7px] bg-[#FF5C43] px-1.5 text-[10px] font-extrabold leading-[16px] text-white">
+            NEW
           </span>
         )}
       </div>
