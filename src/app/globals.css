@@ -109,6 +109,24 @@ input, select, textarea {
   text-align: center;
 }
 
+/* 최근 반영된 영상에 나온 곳 — 마커 위쪽에 NEW 뱃지 */
+.jm-marker__new {
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0 4px;
+  border-radius: 7px;
+  background: #ff5c43;
+  color: #ffffff;
+  border: 1.5px solid #ffffff;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 12px;
+  box-shadow: 0 1px 3px rgba(244, 59, 78, 0.4);
+}
+
 /* 마커 아래로 향하는 꼬리 */
 .jm-marker__tail {
   position: absolute;

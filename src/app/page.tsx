@@ -13,8 +13,7 @@ import BottomSheet from '@/components/BottomSheet';
 import CategoryPickerSheet from '@/components/CategoryPickerSheet';
 import ChannelPickerSheet from '@/components/ChannelPickerSheet';
 import FilterBar from '@/components/FilterBar';
-import NewVideosSheet from '@/components/NewVideosSheet';
-import NewVideoTicker from '@/components/NewVideoTicker';
+import NewVideosRail from '@/components/NewVideosRail';
 import PlaceDetailSheet from '@/components/PlaceDetailSheet';
 import PlaceRow from '@/components/PlaceRow';
 import Top10PlaceRow from '@/components/Top10PlaceRow';
@@ -43,8 +42,6 @@ const COLLAPSED_HEIGHT = 282;
 const EXPANDED_TOP_OFFSET = 132;
 /** 상단 오버레이(로고 + 필터 바) 높이 — 지도 "보이는 영역" 계산용. */
 const TOP_OVERLAY_HEIGHT = 96;
-/** 새 영상 롤링 배너가 떠 있을 때 오버레이에 더해지는 높이(배너 34px + 여백). */
-const NEW_VIDEO_TICKER_HEIGHT = 40;
 
 export default function Home() {
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
@@ -54,7 +51,6 @@ export default function Home() {
   const [openPicker, setOpenPicker] = useState<'channel' | 'category' | null>(null);
   const [top10Active, setTop10Active] = useState(false);
   const [requestModalOpen, setRequestModalOpen] = useState(false);
-  const [newVideosOpen, setNewVideosOpen] = useState(false);
   // 장소 상세 시트의 실측 높이. 열려 있으면 지도 하단 inset으로 쓴다.
   const [detailSheetHeight, setDetailSheetHeight] = useState(0);
   const [sheetExpanded, setSheetExpanded] = useState(false);
@@ -63,8 +59,14 @@ export default function Home() {
   const selectedPlace = selectedPlaceKey ? placeByKey.get(selectedPlaceKey) ?? null : null;
   const selectedChannel = selectedChannelId ? channelById.get(selectedChannelId) ?? null : null;
 
-  // 최근 일주일 사이 지도에 반영된 영상 — 롤링 배너와 전용 시트에서 쓴다.
+  // 최근 일주일 사이 지도에 반영된 영상 — 시트 상단 신규 섹션과 NEW 뱃지에서 쓴다.
   const newVideos = useMemo(() => recentlyAddedVideos(), []);
+  const newVideoIds = useMemo(() => new Set(newVideos.map((video) => video.id)), [newVideos]);
+  // 신규 영상에 나온 가게 — 지도 마커에 NEW 뱃지를 단다.
+  const newPlaceKeys = useMemo(
+    () => new Set(newVideos.flatMap((video) => video.placeKeys)),
+    [newVideos]
+  );
 
   const videoCountByChannel = useMemo(() => {
     const counts = new Map<string, number>();
@@ -195,9 +197,10 @@ export default function Home() {
           videoCount: place.videos.length,
           selected: place.key === selectedPlaceKey,
           rank: rankByPlaceKey?.get(place.key) ?? null,
+          isNew: newPlaceKeys.has(place.key),
         };
       }),
-    [visiblePlaces, selectedPlaceKey, selectedVideoId, rankByPlaceKey]
+    [visiblePlaces, selectedPlaceKey, selectedVideoId, rankByPlaceKey, newPlaceKeys]
   );
 
   // 영상 선택 → 그 영상의 장소가 모두 보이게. 장소 선택 → 그 장소로.
@@ -274,9 +277,7 @@ export default function Home() {
           onMapClick={handleMapClick}
           // 상세 시트가 열려 있으면 그 실측 높이, 아니면 접힌 바텀시트 높이만큼이 가려진다.
           bottomInset={selectedPlace ? detailSheetHeight || COLLAPSED_HEIGHT : COLLAPSED_HEIGHT}
-          topInset={
-            TOP_OVERLAY_HEIGHT + (newVideos.length > 0 ? NEW_VIDEO_TICKER_HEIGHT : 0)
-          }
+          topInset={TOP_OVERLAY_HEIGHT}
         />
       </div>
 
@@ -312,11 +313,6 @@ export default function Home() {
             onToggleTop10={handleToggleTop10}
           />
         </div>
-        {newVideos.length > 0 && (
-          <div className="pointer-events-auto px-4 pt-0.5">
-            <NewVideoTicker videos={newVideos} onClick={() => setNewVideosOpen(true)} />
-          </div>
-        )}
       </div>
 
       <BottomSheet
@@ -462,8 +458,17 @@ export default function Home() {
           </>
         ) : (
           <>
+            {/* 필터가 없는 기본 화면에서만 신규 섹션을 얹는다 — 필터 결과와 섞이면 헷갈린다. */}
+            {!filtersActive && newVideos.length > 0 && (
+              <NewVideosRail videos={newVideos} onSelect={handleSelectVideo} />
+            )}
             {visibleVideos.map((video) => (
-              <VideoCard key={video.id} video={video} onClick={() => handleSelectVideo(video.id)} />
+              <VideoCard
+                key={video.id}
+                video={video}
+                isNew={newVideoIds.has(video.id)}
+                onClick={() => handleSelectVideo(video.id)}
+              />
             ))}
             {visibleVideos.length === 0 && (
               <p className="px-5 py-10 text-center text-[14px] text-[#8E8E8E]">
@@ -496,15 +501,6 @@ export default function Home() {
         selectedCategory={selectedCategory}
         onSelect={handleSelectCategory}
         onClose={() => setOpenPicker(null)}
-      />
-      <NewVideosSheet
-        isOpen={newVideosOpen}
-        videos={newVideos}
-        onSelect={(videoId) => {
-          handleSelectVideo(videoId);
-          setNewVideosOpen(false);
-        }}
-        onClose={() => setNewVideosOpen(false)}
       />
       <VideoRequestModal isOpen={requestModalOpen} onClose={() => setRequestModalOpen(false)} />
     </main>

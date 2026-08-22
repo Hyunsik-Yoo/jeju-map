@@ -79,4 +79,6 @@ export interface MapMarker {
   selected: boolean;
   /** 출연 TOP10 모드의 순위(1부터). 값이 있으면 프로필 대신 순위 마커로 그린다. */
   rank?: number | null;
+  /** 최근 반영된 영상에 나온 가게 — 마커에 NEW 뱃지를 단다. */
+  isNew?: boolean;
 }
