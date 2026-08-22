@@ -52,6 +52,8 @@ export interface Video {
   title: string;
   url: string;
   publishedAt: string;
+  /** 이 영상이 지도에 처음 반영된 날짜(스냅샷 기준) — "새로 올라온 영상" 판별용. */
+  addedAt: string;
   durationSec: number | null;
   viewCount: number | null;
   likeCount: number | null;

@@ -9,6 +9,9 @@ import os
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "scripts", "raw", "sheet-payload.json")
 AVATARS = os.path.join(ROOT, "scripts", "raw", "avatars.json")
+# 영상이 처음 스냅샷에 등장한 날짜 원장 — "새로 올라온 영상" 배너의 기준.
+# 시트에는 없는 파생 데이터라 여기서 만들어 커밋으로 유지한다.
+ADDED_AT = os.path.join(ROOT, "scripts", "raw", "video-added-at.json")
 OUT = os.path.join(ROOT, "src", "data", "jeju.json")
 
 
@@ -22,6 +25,8 @@ def num(value: str):
 def main() -> None:
     raw = json.load(open(SRC, encoding="utf-8"))
     avatars = json.load(open(AVATARS, encoding="utf-8")) if os.path.exists(AVATARS) else {}
+    added_at = json.load(open(ADDED_AT, encoding="utf-8")) if os.path.exists(ADDED_AT) else {}
+    snapshot_date = raw["fetchedAt"][:10]
 
     # 채널 마스터는 avatars.json 기준이다. `channels` 탭은 크롤 시드만 담고 있어서
     # 검색 모드로 주워온 영상의 채널이 빠진다 — 마커가 채널 프로필이라 전부 필요하다.
@@ -38,7 +43,9 @@ def main() -> None:
 
     videos = {}
     for video_id, channel_id, title, url, published_at, duration, views, likes in raw["videos"]:
+        added_at.setdefault(video_id, snapshot_date)
         videos[video_id] = {
+            "addedAt": added_at[video_id],
             "id": video_id,
             "channelId": channel_id,
             "title": title,
@@ -121,6 +128,9 @@ def main() -> None:
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
+
+    with open(ADDED_AT, "w", encoding="utf-8") as f:
+        json.dump(added_at, f, ensure_ascii=False, indent=1, sort_keys=True)
 
     print(f"channels {len(out['channels'])} / videos {len(out['videos'])} / places {len(out['places'])}")
     print(f"제외 — 장소 없는 영상 {len(videos) - len(kept_videos)}, 영상 없는 장소 {len(orphan_places)}")
