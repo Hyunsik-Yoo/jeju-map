@@ -7,7 +7,8 @@ import type { Channel } from '@/types';
 
 interface FilterBarProps {
   selectedChannel: Channel | null;
-  selectedCategory: string | null;
+  /** 선택된 카테고리 필터의 표시 라벨("한식", "카페 전체" …). 미선택이면 null. */
+  selectedCategoryLabel: string | null;
   top10Active: boolean;
   onOpenChannelPicker: () => void;
   onOpenCategoryPicker: () => void;
@@ -18,7 +19,7 @@ interface FilterBarProps {
 
 export default function FilterBar({
   selectedChannel,
-  selectedCategory,
+  selectedCategoryLabel,
   top10Active,
   onOpenChannelPicker,
   onOpenCategoryPicker,
@@ -36,10 +37,10 @@ export default function FilterBar({
         onClear={selectedChannel ? onClearChannel : undefined}
       />
       <Chip
-        label={selectedCategory ?? '카테고리'}
-        active={selectedCategory !== null}
+        label={selectedCategoryLabel ?? '카테고리'}
+        active={selectedCategoryLabel !== null}
         onClick={onOpenCategoryPicker}
-        onClear={selectedCategory ? onClearCategory : undefined}
+        onClear={selectedCategoryLabel ? onClearCategory : undefined}
       />
       {/* 픽커 없이 켜고 끄는 토글 필터 — 유튜브에 많이 나온 가게 TOP10 */}
       <Chip label="출연 TOP10" active={top10Active} onClick={onToggleTop10} toggle />

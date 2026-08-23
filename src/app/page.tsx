@@ -20,19 +20,22 @@ import Top10PlaceRow from '@/components/Top10PlaceRow';
 import VideoCard from '@/components/VideoCard';
 import VideoRequestModal from '@/components/VideoRequestModal';
 import {
-  categoryOf,
+  categoryFilterKey,
+  categoryFilterLabel,
   categoryStatsOf,
   channelById,
   data,
   formatCount,
   formatDuration,
   formatRelativeDate,
+  matchesCategoryFilter,
   placeByKey,
   placesOf,
   recentlyAddedVideos,
   thumbnailOf,
   videoById,
 } from '@/lib/data';
+import type { CategoryFilter } from '@/lib/data';
 import type { MapMarker } from '@/types';
 
 // 네이버 SDK는 window에 붙기 때문에 서버 렌더에서 제외한다.
@@ -47,7 +50,7 @@ export default function Home() {
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [selectedPlaceKey, setSelectedPlaceKey] = useState<string | null>(null);
   const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<CategoryFilter | null>(null);
   const [openPicker, setOpenPicker] = useState<'channel' | 'category' | null>(null);
   const [top10Active, setTop10Active] = useState(false);
   const [requestModalOpen, setRequestModalOpen] = useState(false);
@@ -93,7 +96,7 @@ export default function Home() {
     (placeKey: string) => {
       if (!selectedCategory) return true;
       const place = placeByKey.get(placeKey);
-      return place ? categoryOf(place) === selectedCategory : false;
+      return place ? matchesCategoryFilter(place, selectedCategory) : false;
     },
     [selectedCategory]
   );
@@ -133,7 +136,7 @@ export default function Home() {
   const filteredPlaces = useMemo(
     () =>
       channelPlaces.filter(
-        (place) => !selectedCategory || categoryOf(place) === selectedCategory
+        (place) => !selectedCategory || matchesCategoryFilter(place, selectedCategory)
       ),
     [channelPlaces, selectedCategory]
   );
@@ -246,7 +249,7 @@ export default function Home() {
     setOpenPicker(null);
   }, []);
 
-  const handleSelectCategory = useCallback((category: string | null) => {
+  const handleSelectCategory = useCallback((category: CategoryFilter | null) => {
     setSelectedCategory(category);
     setSelectedVideoId(null);
     setSelectedPlaceKey(null);
@@ -304,7 +307,7 @@ export default function Home() {
         <div className="pointer-events-auto">
           <FilterBar
             selectedChannel={selectedChannel}
-            selectedCategory={selectedCategory}
+            selectedCategoryLabel={selectedCategory ? categoryFilterLabel(selectedCategory) : null}
             top10Active={top10Active}
             onOpenChannelPicker={() => setOpenPicker('channel')}
             onOpenCategoryPicker={() => setOpenPicker('category')}
@@ -320,7 +323,7 @@ export default function Home() {
         expandedTopOffset={EXPANDED_TOP_OFFSET}
         expanded={sheetExpanded}
         onExpandedChange={setSheetExpanded}
-        resetKey={`${selectedVideoId ?? ''}/${selectedChannelId ?? ''}/${selectedCategory ?? ''}/${top10Active}`}
+        resetKey={`${selectedVideoId ?? ''}/${selectedChannelId ?? ''}/${categoryFilterKey(selectedCategory)}/${top10Active}`}
         header={
           selectedVideo ? (
             <div style={{ borderBottom: '1px solid #F4F4F4' }}>
