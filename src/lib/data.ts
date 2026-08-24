@@ -40,6 +40,31 @@ export function categoryOf(place: Place): string {
   return place.category || PLACE_TYPE_LABEL[place.type];
 }
 
+/**
+ * 카테고리 필터 선택값 — 대분류(장소 타입) 통째로 고르거나, 세부 업종 하나를 고른다.
+ * 업종 원문에도 "카페"가 있어서 문자열 하나로는 둘을 구분할 수 없다.
+ */
+export type CategoryFilter =
+  | { kind: 'type'; type: PlaceType }
+  | { kind: 'category'; name: string };
+
+export function matchesCategoryFilter(place: Place, filter: CategoryFilter): boolean {
+  return filter.kind === 'type'
+    ? place.type === filter.type
+    : categoryOf(place) === filter.name;
+}
+
+/** 필터 칩에 보여줄 라벨. 대분류는 세부 업종과 구분되게 "전체"를 붙인다. */
+export function categoryFilterLabel(filter: CategoryFilter): string {
+  return filter.kind === 'type' ? `${PLACE_TYPE_LABEL[filter.type]} 전체` : filter.name;
+}
+
+/** resetKey 등 문자열 키가 필요한 곳에서 쓰는 안정적인 직렬화. */
+export function categoryFilterKey(filter: CategoryFilter | null): string {
+  if (!filter) return '';
+  return filter.kind === 'type' ? `t:${filter.type}` : `c:${filter.name}`;
+}
+
 /** 주어진 장소들 기준의 카테고리 집계. 필터가 걸린 상태의 픽커에서도 쓴다. */
 export function categoryStatsOf(places: Place[]): CategoryStat[] {
   const acc = new Map<string, { count: number; byType: Map<PlaceType, number> }>();
